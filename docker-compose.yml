@@ -1,0 +1,43 @@
+services:
+  dhcp:
+    build: .
+    image: isolated-dhcp-lab:latest
+    container_name: isolated-dhcp-lab
+    restart: unless-stopped
+    environment:
+      # A single fixed pool, in a documentation-reserved prefix.
+      DHCP_POOL_START: "192.0.2.100"
+      DHCP_POOL_END: "192.0.2.110"
+      DHCP_SUBNET_MASK: "255.255.255.0"
+      DHCP_ROUTER: "192.0.2.1"
+      DHCP_DNS: "192.0.2.53"
+      DHCP_SERVER_ID: "192.0.2.2"
+      DHCP_BROADCAST: "192.0.2.255"
+      # Seconds. Offers hold an address; confirmed leases survive restarts.
+      DHCP_LEASE_TIME: "120"
+      DHCP_OFFER_TTL: "60"
+      DHCP_DECLINE_QUARANTINE: "300"
+      # Unprivileged port inside the container. Map it directly; do not use 67.
+      DHCP_UDP_PORT: "6767"
+      DHCP_UDP_HOST: "0.0.0.0"
+      DHCP_DB_PATH: "/data/dhcp.sqlite3"
+      # The web console sends its real test datagrams back to the listener.
+      DHCP_SIM_TARGET_HOST: "127.0.0.1"
+      DHCP_SIM_TARGET_PORT: "6767"
+      # Set to "1" to enable the web-only drill endpoint that makes the next
+      # lease commit fail, demonstrating that no ACK is sent without durability.
+      DHCP_ALLOW_FAILURE_INJECTION: "1"
+    ports:
+      - "6767:6767/udp"
+      - "8080:8080/tcp"
+    volumes:
+      - dhcp-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/health', timeout=2)"]
+      interval: 15s
+      timeout: 3s
+      retries: 4
+      start_period: 5s
+
+volumes:
+  dhcp-data:

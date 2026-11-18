@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>隔离测试网 DHCPv4 控制台</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>隔离测试网 DHCPv4 控制台</h1>
+    <p class="sub">单地址池 · 非特权 UDP 端口 · 真实报文演练</p>
+  </div>
+  <div id="health" class="health">连接中…</div>
+</header>
+
+<main>
+  <section class="card" id="overview">
+    <h2>地址池</h2>
+    <div id="pool" class="pool">加载中…</div>
+    <div id="config" class="config"></div>
+  </section>
+
+  <section class="card">
+    <h2>发送 DHCP 报文</h2>
+    <form id="sim-form">
+      <div class="grid">
+        <label>动作
+          <select name="kind" id="kind">
+            <option value="DISCOVER">DISCOVER</option>
+            <option value="REQUEST">REQUEST</option>
+            <option value="RELEASE">RELEASE</option>
+          </select>
+        </label>
+        <label>MAC 地址
+          <input name="mac" id="mac" value="02:00:00:00:00:01" pattern="^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$" required>
+        </label>
+        <label>主机名（可选）
+          <input name="hostname" id="hostname" placeholder="lab-client">
+        </label>
+        <label>事务 ID XID（可选）
+          <input name="xid" id="xid" placeholder="留空自动生成" inputmode="numeric">
+        </label>
+        <label>Requested IP（REQUEST 用）
+          <input name="requested_ip" id="requested_ip" placeholder="192.0.2.100">
+        </label>
+        <label>ciaddr（RENEW/RELEASE 用）
+          <input name="ciaddr" id="ciaddr" placeholder="192.0.2.100">
+        </label>
+        <label>Server Identifier（可选）
+          <input name="server_id" id="server_id" placeholder="192.0.2.2">
+        </label>
+        <label class="check">
+          <input type="checkbox" name="use_client_id" id="use_client_id" checked>
+          携带 Client Identifier（type 1 + MAC）
+        </label>
+        <label>目标
+          <select name="target" id="target">
+            <option value="loopback">本服务 UDP 端口</option>
+            <option value="custom">自定义主机/端口</option>
+          </select>
+        </label>
+        <label>自定义主机
+          <input name="target_host" id="target_host" placeholder="127.0.0.1" disabled>
+        </label>
+        <label>自定义端口
+          <input name="target_port" id="target_port" placeholder="6767" inputmode="numeric" disabled>
+        </label>
+      </div>
+      <div class="actions">
+        <button type="submit">发送真实报文</button>
+        <button type="button" class="ghost" id="quick-discover">快速 DISCOVER</button>
+        <span id="sim-status" class="status"></span>
+      </div>
+    </form>
+    <div class="hint">
+      网页由浏览器把表单拼成 DHCPv4 数据包，再由本服务从自己的 UDP 套接字发出并等待响应；
+      响应是服务器真实生成并解析的报文。会占用地址，但不会改动机器网卡配置。
+    </div>
+    <pre id="sim-result" class="result hidden"></pre>
+  </section>
+
+  <section class="card">
+    <h2>当前预留与租约 <span id="lease-count" class="badge"></span></h2>
+    <p class="hint">OFFER 有效期内的地址会占用池资源，其他设备无法领取；RELEASE 或过期后回收。</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>地址</th><th>状态</th><th>客户端</th><th>MAC</th><th>主机名</th><th>剩余</th><th>更新时间</th></tr>
+        </thead>
+        <tbody id="leases"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>事件时间线</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>时间</th><th>类别</th><th>报文</th><th>地址</th><th>客户端</th><th>详情</th></tr>
+        </thead>
+        <tbody id="events"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>所有地址均为文档保留网段示例值，仅供隔离环境。</span>
+</footer>
+<script src="/static/app.js"></script>
+</body>
+</html>
